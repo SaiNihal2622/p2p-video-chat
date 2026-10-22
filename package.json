@@ -1,0 +1,21 @@
+{
+  "name": "p2p-video-chat",
+  "version": "1.0.0",
+  "description": "Peer-to-peer video chat desktop app built with Electron + WebRTC. Direct P2P media via RTCPeerConnection, signaling over WebSocket, no cloud media relay.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node src/signaling-server.js",
+    "dev": "concurrently \"npm run server\" \"npm run start\""
+  },
+  "keywords": ["webrtc", "electron", "p2p", "video-chat", "rtcpeerconnection", "websocket"],
+  "author": "Sai Nihal Boora",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

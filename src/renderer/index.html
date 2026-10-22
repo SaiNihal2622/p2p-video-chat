@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src ws: wss:; media-src blob:; style-src 'self' 'unsafe-inline'" />
+  <title>P2P Video Chat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>P2P Video Chat</h1>
+    <p class="sub">Electron + WebRTC — direct peer-to-peer media, no cloud relay</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <input id="room" placeholder="Room ID (e.g. alice-bob)" value="demo-room" />
+      <button id="join">Join Room</button>
+      <button id="startCam" disabled>Start Camera</button>
+      <button id="hangup" disabled>Hang Up</button>
+      <span id="status" class="status">Idle</span>
+    </section>
+
+    <section class="videos">
+      <div class="video-box">
+        <video id="local" autoplay muted playsinline></video>
+        <label>You (local)</label>
+      </div>
+      <div class="video-box">
+        <video id="remote" autoplay playsinline></video>
+        <label>Peer (remote)</label>
+      </div>
+    </section>
+
+    <section class="log">
+      <h3>Signaling / ICE log</h3>
+      <pre id="log"></pre>
+    </section>
+  </main>
+
+  <script src="client.js"></script>
+</body>
+</html>
