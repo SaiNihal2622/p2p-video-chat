@@ -6,16 +6,29 @@
   "scripts": {
     "start": "electron .",
     "server": "node src/signaling-server.js",
-    "dev": "concurrently \"npm run server\" \"npm run start\""
+    "dev": "concurrently \"npm run server\" \"npm run start\"",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
   },
-  "keywords": ["webrtc", "electron", "p2p", "video-chat", "rtcpeerconnection", "websocket"],
+  "keywords": [
+    "webrtc",
+    "electron",
+    "p2p",
+    "video-chat",
+    "rtcpeerconnection",
+    "websocket"
+  ],
   "author": "Sai Nihal Boora",
   "license": "MIT",
   "devDependencies": {
+    "concurrently": "^8.2.0",
     "electron": "^31.0.0",
-    "concurrently": "^8.2.0"
+    "electron-builder": "^26.15.3"
   },
   "dependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "zustand": "^5.0.16"
   }
 }
