@@ -1,0 +1,136 @@
+# Production Kubernetes manifests for the P2P Video Chat signaling server.
+# Deploys the WebSocket signaling server with a Deployment, Service, ConfigMap,
+# HorizontalPodAutoscaler, and an Ingress — production-grade, cloud-neutral.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: p2p-signaling
+  labels:
+    app: p2p-signaling
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: p2p-signaling
+  template:
+    metadata:
+      labels:
+        app: p2p-signaling
+    spec:
+      # Spread replicas across nodes for resilience.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: ["p2p-signaling"]
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: signaling
+          image: ghcr.io/sainihal2622/p2p-signaling:latest
+          imagePullPolicy: Always
+          ports:
+            - name: ws
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: p2p-signaling-config
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # Liveness: restart if the HTTP health endpoint stops responding.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: ws
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Readiness: remove from Service endpoints until it can serve traffic.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: ws
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+          # Graceful shutdown so open WebSocket clients can disconnect cleanly.
+          terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: p2p-signaling
+  labels:
+    app: p2p-signaling
+spec:
+  type: ClusterIP
+  selector:
+    app: p2p-signaling
+  ports:
+    - name: ws
+      port: 80
+      targetPort: ws
+      protocol: TCP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: p2p-signaling-config
+data:
+  PORT: "8080"
+  MAX_PEERS_PER_ROOM: "20"
+  LOG_LEVEL: "info"
+---
+# Scale replicas based on WebSocket connection load.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: p2p-signaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: p2p-signaling
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: p2p-signaling
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/websocket-services: "p2p-signaling"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: signaling.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: p2p-signaling
+                port:
+                  name: ws

@@ -6,6 +6,12 @@ const http = require('http');
 
 const PORT = process.env.PORT || 8080;
 const server = http.createServer((req, res) => {
+  // Health endpoint used by Kubernetes liveness/readiness probes.
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', rooms: rooms.size, connections: wss.clients?.size ?? 0 }));
+    return;
+  }
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('P2P Video Chat signaling server\n');
 });
